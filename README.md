@@ -87,3 +87,6 @@ Most properties are not supported. Only vector path data is taken. As such, the 
 - corner radius
 - rotation
 - boolean operations
+
+## License
+This plugin is subject to the [Community Free Resource License](https://www.figma.com/community-free-resource-license/) of Figma.
