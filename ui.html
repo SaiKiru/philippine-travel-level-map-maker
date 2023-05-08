@@ -1,17 +1,166 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
+<body>
+  <h2>Map Converter</h2>
+
+  <div id="actionDescriptions">
+    <p>Description of actions:</p>
+    <div>
+      <ul>
+        <li><b>Copy map data:</b> Copies complete map data of current selection</li>
+        <li><b>Copy provinces data:</b> Copies only array of provinces of current selection</li>
+        <li><b>Save:</b> Not yet implemented</li>
+      </ul>
+    </div>
+  </div>
+
+  <div>
+    <a href="https://github.com/SaiKiru/philippine-travel-level-map-maker/issues" target="_blank">Report a bug / Request a feature</a>
+  </div>
+  <div>
+    <a href="https://github.com/SaiKiru/philippine-travel-level-map-maker" target="_blank">How to use / Source code</a>
+  </div>
+
+  <div id="dialogControls">
+    <button id="copyMapBtn" class="clickable" >Copy map data</button>
+    <button id="copyProvincesBtn" class="clickable" >Copy provinces data</button>
+    <button id="saveToFileBtn" class="clickable" disabled>Save</button>
+  </div>
+</body>
+
+<style>
+  * {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  body {
+    margin: 0;
+    padding: 16px;
+    width: 100%;
+    color: #333;
+  }
+
+  #actionDescriptions {
+    font-size: 0.7em;
+  }
+  #actionDescriptions ul {
+    padding-left: 1.5em;
+  }
+
+  #actionDescriptions ul li {
+    margin: 0.5em 0;
+  }
+
+  a {
+    display: inline-block;
+    padding: 4px 0;
+    color: #d73874;
+    text-decoration: none;
+    font-size: 0.7em;
+    font-weight: bold;
+  }
+
+  #dialogControls {
+    margin: 12px 0;
+    width: 100%;
+  }
+
+  #dialogControls button {
+    width: 100%;
+    padding: 8px;
+    margin: 4px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #777;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-align: left;
+  }
+
+  #dialogControls button:hover {
+    background-color: #d73874;
+    color: white;
+  }
+
+  #dialogControls button:disabled {
+    border-color: #eee;
+    background-color: #eee;
+    color: #ccc;
+  }
+
+  .clickable {
+    cursor: pointer;
+  }
+
+  .clickable:disabled {
+    cursor: not-allowed;
+  }
+</style>
+
 <script>
+  document.querySelector('#copyMapBtn').onclick = () => {
+    parent.postMessage({
+      pluginMessage: {
+        type: 'copy-map',
+      }
+    }, '*');
+  };
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-rectangles', count } }, '*')
-}
+  document.querySelector('#copyProvincesBtn').onclick = () => {
+    parent.postMessage({
+      pluginMessage: {
+        type: 'copy-provinces',
+      }
+    }, '*');
+  };
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+  document.querySelector('#saveToFileBtn').onclick = () => {
+    parent.postMessage({
+      pluginMessage: {
+        type: 'save-to-file',
+      }
+    }, '*');
+  };
+
+  onmessage = (event) => {
+    let message = event.data.pluginMessage;
+    console.log('message');
+
+    if (message.type === 'return-file-data') {
+      let file = new Blob([message.data], { type: 'application/json' });
+      let fileURL = URL.createObjectURL(file);
+
+      let downloader = document.createElement('a');
+      downloader.href = fileURL;
+      downloader.download = 'sample';
+
+      document.body.appendChild(downloader);
+      downloader.click();
+
+      setTimeout(() => {
+        document.body.removeChild(downloader);
+        window.URL.revokeObjectURL(fileURL);
+      }, 0);
+    }
+    else if (message.type === 'return-clipboard-data') {
+      let textSelector = document.createElement('textarea');
+      textSelector.value = convertQuotesToSingle(JSON.stringify(message.data));
+
+      document.body.appendChild(textSelector);
+      textSelector.select();
+
+      document.execCommand('copy');
+      document.body.removeChild(textSelector);
+
+      alert('Copied to clipboard!');
+    }
+    else if (message.type === 'alert-message') {
+      alert(message.data)
+    }
+  }
+
+  function convertQuotesToSingle(string) {
+    return string.replaceAll('"', '\'');
+  }
 
 </script>

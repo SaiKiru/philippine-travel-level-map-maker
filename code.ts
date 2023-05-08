@@ -1,33 +1,119 @@
-// This plugin will open a window to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
+const IGNORED_NODES = [
+  'POLYGON',
+  'STAR',
+  'ELLIPSE',
+  'LINE',
+  'TEXT',
+  'FRAME',
+  'GROUP'
+];
 
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
-
-// This shows the HTML page in "ui.html".
 figma.showUI(__html__);
+figma.ui.resize(300, 400);
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
 figma.ui.onmessage = msg => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === 'create-rectangles') {
-    const nodes: SceneNode[] = [];
-    for (let i = 0; i < msg.count; i++) {
-      const rect = figma.createRectangle();
-      rect.x = i * 150;
-      rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-      figma.currentPage.appendChild(rect);
-      nodes.push(rect);
+  if (msg.type === 'copy-map') {
+    let selected: SceneNode = getSelectedOrFirstNode();
+
+    if (selected.type === 'FRAME') {
+      let mapData = createFrameMap(selected as FrameNode);
+
+      figma.ui.postMessage({
+        type: 'return-clipboard-data',
+        data: mapData,
+      });
+    } else {
+      figma.ui.postMessage({
+        type: 'alert-message',
+        data: 'Invalid object selected. Make sure it is a Frame.',
+      });
     }
-    figma.currentPage.selection = nodes;
-    figma.viewport.scrollAndZoomIntoView(nodes);
+  } else if (msg.type === 'copy-provinces') {
+    let selected: SceneNode = getSelectedOrFirstNode();
+
+    if (selected.type === 'FRAME') {
+      let mapData = createFrameMap(selected as FrameNode);
+
+      figma.ui.postMessage({
+        type: 'return-clipboard-data',
+        data: mapData.provinces,
+      });
+    } else {
+      figma.ui.postMessage({
+        type: 'alert-message',
+        data: 'Invalid object selected. Make sure it is a Frame.',
+      });
+    }
+  } else if (msg.type === 'save-to-file') {
+    // TODO: Compress map data into a directory and download for user
+  }
+};
+
+function createFileMaps() {
+  // TODO: Save each Page as a directory
+}
+
+function createPageMaps(page: PageNode) {
+  // TODO: Save each Frame as a separate map
+}
+
+function createFrameMap(frame: FrameNode) {
+  const provinces: any[] = [];
+
+  frame.children.forEach(node => {
+    let provinceData = convertToProvince(node);
+
+    if (provinceData) {
+      provinces.push(provinceData);
+    }
+  });
+
+  return {
+    mapName: frame.name,
+    size: {width: frame.width, height: frame.height},
+    provinces,
+    options: {
+      initialZoom: 1.0,
+    }
+  };
+}
+
+function convertToProvince(node: SceneNode) {
+  if (!IGNORED_NODES.includes(node.type)
+      && !/.*@ignore$/.test(node.name)
+  ) {
+    if (node.type === 'VECTOR') {
+      return vectorToProvince(node);
+    } else if (node.type === 'RECTANGLE') {
+      return rectangleToProvince(node);
+    } else {
+      throw new Error(`Unexpected node type: ${node.type} of ${node.name}`);
+    }
+  }
+}
+
+function vectorToProvince(node: VectorNode) {
+  return {
+    id: node.name,
+    transform: `translate(${node.x} ${node.y})`,
+    drawPath: (node.vectorPaths.map(path => path.data)).join(' '),
+  };
+}
+
+function rectangleToProvince(node: RectangleNode) {
+  return {
+    id: node.name,
+    transform: `translate(${node.x} ${node.y})`,
+    drawPath: `M 0 0 L ${node.width} 0 L ${node.width} ${node.height} L 0 ${node.height} Z`,
+  };
+}
+
+function getSelectedOrFirstNode() {
+  let selected: SceneNode = figma.currentPage.selection[0];
+
+  if (!selected) {
+    selected = figma.root.children[0].children[0];
   }
 
-  // Make sure to close the plugin when you're done. Otherwise the plugin will
-  // keep running, which shows the cancel button at the bottom of the screen.
-  figma.closePlugin();
-};
+  return selected;
+}
