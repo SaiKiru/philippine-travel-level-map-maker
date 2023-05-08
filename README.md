@@ -1,40 +1,89 @@
-Below are the steps to get your plugin running. You can also find instructions at:
+Figma plugin for creating custom maps for the [Philippine Travel Level Map](https://github.com/OSSPhilippines/philippines-travel-level-map) by denzdelvillar. This plugin will convert Figma design files into Map data for proper use in the application.
 
-  https://www.figma.com/plugin-docs/plugin-quickstart/
+This plugin is only available for Figma design files and not for FigJam.
 
-This plugin template uses Typescript and NPM, two standard tools in creating JavaScript applications.
+- [Using Figma plugins](https://help.figma.com/hc/en-us/articles/360042532714-Use-plugins-in-files)
 
-First, download Node.js which comes with NPM. This will allow you to install TypeScript and other
-libraries. You can find the download link here:
+## Sample
 
-  https://nodejs.org/en/download/
+### Map in Figma
+![CAR map in Figma](https://user-images.githubusercontent.com/59113205/236890822-c1cf57a5-a894-451a-913b-cadcb403af0c.png)
 
-Next, install TypeScript using the command:
+### Map in Phil Travel
+![CAR map in Phil Travel](https://user-images.githubusercontent.com/59113205/236890299-f89dbee4-f797-4fe1-8555-1e5c9f1c28a2.png)
 
-  npm install -g typescript
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+# Usage
+## Supported Nodes
+- Vector nodes (including arrows, but arrows won't render correctly)
+- Rectangle nodes (including images, but images won't render)
 
-  npm install --save-dev @figma/plugin-typings
+## Conversion
 
-If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
-is already valid Typescript code.
+Figma | Phil Travel | Status 
+----- | ----------- | ------
+File  | ---         | TODO
+Page  | ---         | TODO
+Frame | Map         | DONE
+Node  | Province    | DONE
 
-TypeScript adds type annotations to variables. This allows code editors such as Visual Studio Code
-to provide information about the Figma API while you are writing code, as well as help catch bugs
-you previously didn't notice.
+**Vector** nodes and **Rectangle** nodes will be converted as usable data for `<path>` SVG elements. The name of the nodes will be used as the id of the Province. The name of the **Frame** will be used as the name of the Map. In addition, the size of the **Frame** will be used as the size of the Map.
 
-For more information, visit https://www.typescriptlang.org/
+## Ignoring nodes
+To ignore specific nodes, add `@ignore`  to the end of the name of the node (e.g. `"Reference @ignore"` will be ignored). This can be useful when using reference images for maps, since images are processed as a **Rectangle** node.
 
-Using TypeScript requires a compiler to convert TypeScript (code.ts) into JavaScript (code.js)
-for the browser to run.
+#### Map in Figma:
+![CAR map in Figma](https://user-images.githubusercontent.com/59113205/236890057-d7004407-5af2-484e-b4af-4fdb0b285d5e.png)
 
-We recommend writing TypeScript code using Visual Studio code:
+#### Map in Phil Travel:
+![CAR map in Phil Travel](https://user-images.githubusercontent.com/59113205/236890299-f89dbee4-f797-4fe1-8555-1e5c9f1c28a2.png)
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Open this directory in Visual Studio Code.
-3. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "npm: watch". You will have to do this again every time
-    you reopen Visual Studio Code.
+By adding the `@ignore` at the end of the name, we prevent the image from rendering. This allows us to edit the map later if needed.
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
+In addition, the following nodes are ignored by default and will not be processed:
+- Polygon
+- Star
+- Ellipse
+- Line
+- Text
+- Frame (Only Frames inside a Frame)
+- Group
+
+To handle complex province shapes, consider simplifying the shape or flattening Group nodes.
+
+## Data Output
+Currently, the only supported operation is the "Copy to Clipboard". Make sure that the **Frame** of the Map to be exported is selected before copying to clipboard. Otherwise, the first **Frame** in the first **Page** will be exported.
+
+### Map Data
+```js
+{
+  mapName: 'Philippines', // name of the Frame object
+  size: {
+    width: 69, // width of the Frame object
+    height: 100, // height of the Frame object
+  },
+  provinces: [
+    // Province data
+  ],
+  options: { // custom map options for future use
+    initialZoom: 1.0,
+  }
+}
+```
+
+### Province Data
+```js
+{
+  id: 'Baguio City', // name of the Node
+  transform: 'translate(10 50)', // x y position of the Node
+  drawPath: 'M 0 0 L 100 50 ....', // vectorData of the Node
+}
+```
+
+## Unsupported Properties
+Most properties are not supported. Only vector path data is taken. As such, the following will not be preserved. The list is exhaustive.
+- stroke style
+- fill
+- corner radius
+- rotation
+- boolean operations
