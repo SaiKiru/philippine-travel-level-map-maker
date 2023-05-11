@@ -3,6 +3,8 @@ Figma plugin for creating custom maps for the [Philippine Travel Level Map](http
 This plugin is only available for Figma design files and not for FigJam.
 
 - [Using Figma plugins](https://help.figma.com/hc/en-us/articles/360042532714-Use-plugins-in-files)
+- [Link to the plugin](https://www.figma.com/community/plugin/1237302254989444702/Philippine-Travel-Level-Map-Maker)
+- [Sample usage](https://imgur.com/a/alJknme)
 
 ## Sample
 
@@ -11,7 +13,6 @@ This plugin is only available for Figma design files and not for FigJam.
 
 ### Map in Phil Travel
 ![CAR map in Phil Travel](https://user-images.githubusercontent.com/59113205/236890299-f89dbee4-f797-4fe1-8555-1e5c9f1c28a2.png)
-
 
 # Usage
 ## Supported Nodes
@@ -81,7 +82,7 @@ Currently, the only supported operation is the "Copy to Clipboard". Make sure th
 ```
 
 ## Unsupported Properties
-Most properties are not supported. Only vector path data is taken. As such, the following will not be preserved. The list is exhaustive.
+Most properties are not supported. Only vector path data is taken. As such, the following will not be preserved. The list is not exhaustive.
 - stroke style
 - fill
 - corner radius
